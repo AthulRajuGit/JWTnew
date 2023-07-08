@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -22,11 +23,18 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.springsec.example.filter.JwtFilter;
+
+import jakarta.servlet.Filter;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
+	@Autowired
+	private JwtFilter authFilter;
+	
 	@Bean
 	//authentication
 	 public UserDetailsService userDetailsService() {
@@ -44,7 +52,9 @@ public class SecurityConfig {
 	return	sec.csrf().disable().authorizeHttpRequests().requestMatchers("/products/new","/products/auth").permitAll()
 			.and().authorizeHttpRequests()
 		    .requestMatchers("/products/**")
-		    .authenticated().and().formLogin().and().build();
+		    .authenticated().and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+		    .authenticationProvider(authenticationProvider())
+		    .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class).build();
 	}
 	
 	@Bean
